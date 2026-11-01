@@ -1,0 +1,45 @@
+
+name: PROSHOT CAMERA APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extrair projeto
+        run: |
+          mkdir -p project
+          unzip -q PROSHOT_CAMERA_PROJETO.zip -d project
+
+      - name: Compilar APK
+        run: |
+          GRADLEW=$(find project -name gradlew -type f | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "Arquivo gradlew não encontrado no projeto."
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Salvar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PROSHOT-CAMERA-APK
+          path: project/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
